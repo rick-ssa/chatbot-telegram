@@ -1,0 +1,361 @@
+{
+  "name": "workflow-telegram-chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ff74284b-79da-44b6-8161-880510f9f951",
+      "name": "Telegram Trigger",
+      "webhookId": "dfe15693-86fd-4c1f-95ee-e79a39b022f5",
+      "credentials": {
+        "telegramApi": {
+          "id": "RMsply0kh1sAyoYD",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "a6d79e57-853c-4e58-8dd1-618e9f21881c",
+              "leftValue": "={{ $json.lat }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "a783911c-ed1a-4c4d-811c-aa5c0e00ba4d",
+              "leftValue": "={{ $json.lon }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        752,
+        -112
+      ],
+      "id": "55979b4c-5c13-4d5e-87f0-50b4551dbb25",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chatId }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        -48
+      ],
+      "id": "5c3e4096-a535-4e0d-89bc-b9c025580409",
+      "name": "Send a text message",
+      "webhookId": "23d17c09-a271-432e-99e4-9fd9aa678042",
+      "credentials": {
+        "telegramApi": {
+          "id": "RMsply0kh1sAyoYD",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "24166ca7-e2c2-4d0f-a6ea-e4612a473ab0",
+              "name": "chatId",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "99487a3a-ad0b-40b9-8ae5-13aaf1cbba6f",
+              "name": "text",
+              "value": "❌ Cidade não encontrada. Use o formato Cidade,UF,BR (ex.: São Paulo,SP,BR).",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        752,
+        112
+      ],
+      "id": "1d983d55-d2af-46d9-a4e4-521b9126ea61",
+      "name": "error message"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1800258c-eeb0-4a28-be27-42f8dcbd9873",
+              "name": "chatId",
+              "value": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+              "type": "number"
+            },
+            {
+              "id": "7310a059-daf7-4959-94c5-a2480ed6e4b1",
+              "name": "text",
+              "value": "=🌤️ A temperatura em {{$('converte cidade em latitude e longitude').item.json.name}} é de {{$json.data[0].temp.round()}}°C.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1168,
+        -112
+      ],
+      "id": "c7239060-204c-4910-88ab-a0b0e8f4fa1e",
+      "name": "success message"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\n const arrayData = $input.first().json.message.text.split(\",\").map(item => item.toLowerCase().trim())\nif(arrayData.length < 3) {\n  arrayData.push(\"br\")\n}\nreturn {queue: arrayData.join(\",\")};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "2294ad15-fb8e-410e-9779-129ae3896279",
+      "name": "formatar variável"
+    },
+    {
+      "parameters": {
+        "url": "http://api.openweathermap.org/geo/1.0/direct",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openWeatherMapApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.queue }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        464,
+        0
+      ],
+      "id": "0d9924ab-4d67-4dff-b078-989f0cc48f60",
+      "name": "converte cidade em latitude e longitude",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "skfnqTu6cMIiShqr",
+          "name": "Query Auth account"
+        },
+        "openWeatherMapApi": {
+          "id": "CqyAENFXqPT0DVGg",
+          "name": "OpenWeatherMap account 2"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "https://api.openweathermap.org/data/4.0/onecall/current",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openWeatherMapApi",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "lat",
+              "value": "={{ $json.lat }}"
+            },
+            {
+              "name": "lon",
+              "value": "={{ $json.lon }}"
+            },
+            {
+              "name": "units",
+              "value": "metric"
+            },
+            {
+              "name": "lang",
+              "value": "=pt_br"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        960,
+        -112
+      ],
+      "id": "6bb6de77-6eb9-4838-9105-ca23876299dc",
+      "name": "requisição do tempo",
+      "alwaysOutputData": true,
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "i1tKUTxVBBWOpdcj",
+          "name": "OpenWeatherMap account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "formatar variável",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "requisição do tempo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "error message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "error message": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "success message": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "formatar variável": {
+      "main": [
+        [
+          {
+            "node": "converte cidade em latitude e longitude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "converte cidade em latitude e longitude": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "error message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "requisição do tempo": {
+      "main": [
+        [
+          {
+            "node": "success message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "error message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "26de061b-8c84-438c-8392-b83fad1b7475",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "dd93f4a4415ab4e8f5b0a05cd790b990c8a76f5ff8a223ffcc7b0dda09786deb"
+  },
+  "id": "HlPgLnHvSp3OUAmG",
+  "tags": []
+}
